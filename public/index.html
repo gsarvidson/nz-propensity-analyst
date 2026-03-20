@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NZ Property Propensity Analyst</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0f0d;
+    --surface: #111815;
+    --surface2: #172019;
+    --border: #1e2d22;
+    --accent: #2dff6e;
+    --accent-dim: #1a8a3d;
+    --accent-glow: rgba(45,255,110,0.12);
+    --text: #e8f0ea;
+    --text-muted: #6b8570;
+    --text-dim: #3a5040;
+    --score-1: #ff4444;
+    --score-5: #ffaa00;
+    --score-8: #44aaff;
+    --score-10: #2dff6e;
+    --radius: 4px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* grid lines bg */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(45,255,110,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(45,255,110,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+  }
+
+  /* Header */
+  .header {
+    margin-bottom: 48px;
+  }
+
+  .header-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    opacity: 0.8;
+  }
+
+  h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(28px, 5vw, 48px);
+    font-weight: 400;
+    line-height: 1.1;
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .header-sub {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  /* Search */
+  .search-wrap {
+    position: relative;
+    margin-bottom: 40px;
+  }
+
+  .search-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    display: block;
+    margin-bottom: 10px;
+  }
+
+  .search-box {
+    position: relative;
+  }
+
+  .search-input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    padding: 16px 52px 16px 20px;
+    border-radius: var(--radius);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .search-input:focus {
+    border-color: var(--accent-dim);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+
+  .search-input::placeholder {
+    color: var(--text-dim);
+  }
+
+  .search-icon {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    pointer-events: none;
+  }
+
+  /* Dropdown */
+  .dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    max-height: 280px;
+    overflow-y: auto;
+    z-index: 100;
+    display: none;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.6);
+  }
+
+  .dropdown.open { display: block; }
+
+  .dropdown-item {
+    padding: 12px 20px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.1s;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .dropdown-item:last-child { border-bottom: none; }
+
+  .dropdown-item:hover, .dropdown-item.active {
+    background: var(--surface2);
+  }
+
+  .dropdown-item .addr-icon {
+    color: var(--accent);
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  .dropdown-item .addr-main {
+    font-size: 14px;
+    color: var(--text);
+  }
+
+  .dropdown-item .addr-suburb {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-left: auto;
+    font-family: 'DM Mono', monospace;
+    white-space: nowrap;
+  }
+
+  .dropdown-empty {
+    padding: 20px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  /* Analyse button */
+  .analyse-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    padding: 14px 28px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+
+  .analyse-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+  .analyse-btn:active { transform: translateY(0); }
+  .analyse-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+  /* Results */
+  .results {
+    display: none;
+    animation: fadeUp 0.4s ease forwards;
+  }
+
+  .results.visible { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Loading state */
+  .loading-wrap {
+    display: none;
+    padding: 60px 0;
+    text-align: center;
+  }
+
+  .loading-wrap.visible { display: block; }
+
+  .loading-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+    max-width: 320px;
+    margin: 0 auto;
+    text-align: left;
+  }
+
+  .loading-step {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: color 0.3s;
+  }
+
+  .loading-step.done { color: var(--accent); }
+  .loading-step.active { color: var(--text); }
+
+  .step-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+  }
+
+  .loading-step.active .step-dot {
+    animation: pulse 0.8s ease infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* Score card */
+  .score-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 32px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .score-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--score-color, var(--accent));
+  }
+
+  .score-number {
+    font-family: 'DM Serif Display', serif;
+    font-size: 72px;
+    font-weight: 400;
+    line-height: 1;
+    color: var(--score-color, var(--accent));
+    min-width: 80px;
+    text-align: center;
+    text-shadow: 0 0 40px var(--score-color, var(--accent-glow));
+  }
+
+  .score-right { flex: 1; }
+
+  .score-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+
+  .score-category {
+    font-family: 'DM Serif Display', serif;
+    font-size: 24px;
+    margin-bottom: 10px;
+    color: var(--score-color, var(--accent));
+  }
+
+  .score-justification {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  /* Score bar */
+  .score-bar-wrap {
+    margin-top: 16px;
+  }
+
+  .score-bar {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .score-bar-fill {
+    height: 100%;
+    background: var(--score-color, var(--accent));
+    border-radius: 2px;
+    transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+    width: 0;
+  }
+
+  /* Property header */
+  .property-header {
+    margin-bottom: 28px;
+  }
+
+  .property-address {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    margin-bottom: 6px;
+  }
+
+  .property-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+  }
+
+  /* Sections */
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+
+  .section-header {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+  }
+
+  .section-header:hover { background: var(--surface2); }
+
+  .section-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--accent-glow);
+    padding: 3px 8px;
+    border-radius: 2px;
+  }
+
+  .section-title {
+    font-size: 14px;
+    font-weight: 500;
+    flex: 1;
+  }
+
+  .section-chevron {
+    color: var(--text-muted);
+    transition: transform 0.2s;
+    font-size: 12px;
+  }
+
+  .section.open .section-chevron { transform: rotate(180deg); }
+
+  .section-body {
+    display: none;
+    padding: 0 20px 20px;
+    border-top: 1px solid var(--border);
+  }
+
+  .section.open .section-body { display: block; }
+
+  /* Signal rows */
+  .signal-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 16px;
+  }
+
+  .signal-row:last-child { border-bottom: none; padding-bottom: 0; }
+
+  .signal-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.04em;
+    min-width: 140px;
+    padding-top: 2px;
+  }
+
+  .signal-value {
+    font-size: 13px;
+    color: var(--text);
+    text-align: right;
+    line-height: 1.5;
+    flex: 1;
+  }
+
+  .signal-value.positive { color: var(--accent); }
+  .signal-value.warning { color: #ffaa00; }
+  .signal-value.negative { color: #ff6666; }
+
+  /* Why Now */
+  .why-now-card {
+    background: var(--accent-glow);
+    border: 1px solid var(--accent-dim);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin-bottom: 12px;
+  }
+
+  .why-now-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+
+  .why-now-text {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text);
+  }
+
+  /* Capital Gains Card */
+  .gains-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px 28px;
+    margin-bottom: 12px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .gains-card::after {
+    content: '↗';
+    position: absolute;
+    right: 24px;
+    top: 20px;
+    font-size: 40px;
+    color: var(--accent);
+    opacity: 0.08;
+    font-family: 'DM Serif Display', serif;
+    line-height: 1;
+  }
+
+  .gains-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .gains-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: var(--accent-glow);
+    padding: 3px 8px;
+    border-radius: 2px;
+  }
+
+  .gains-title {
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .gains-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 540px) {
+    .gains-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  .gains-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .gains-stat-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .gains-stat-value {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: var(--text);
+    line-height: 1.1;
+  }
+
+  .gains-stat-value.highlight {
+    color: var(--accent);
+  }
+
+  .gains-stat-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .gains-arrow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: var(--surface2);
+    border-radius: var(--radius);
+    margin-bottom: 14px;
+  }
+
+  .gains-arrow-price {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  .gains-arrow-sep {
+    font-size: 18px;
+    color: var(--accent);
+    flex: 1;
+    text-align: center;
+    letter-spacing: -2px;
+  }
+
+  .gains-arrow-price.current {
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  .gains-note {
+    font-size: 12px;
+    color: var(--text-muted);
+    line-height: 1.6;
+    border-top: 1px solid var(--border);
+    padding-top: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .gains-confidence {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    padding: 3px 8px;
+    border-radius: 2px;
+  }
+
+  .gains-confidence.high { color: var(--accent); background: var(--accent-glow); }
+  .gains-confidence.medium { color: #ffaa00; background: rgba(255,170,0,0.1); }
+  .gains-confidence.low { color: #ff8888; background: rgba(255,80,80,0.1); }
+
+  /* Disclaimer */
+  .disclaimer {
+    margin-top: 32px;
+    padding: 16px 20px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    line-height: 1.6;
+    letter-spacing: 0.02em;
+  }
+
+  /* Reset */
+  .reset-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    padding: 10px 20px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border-radius: var(--radius);
+    cursor: pointer;
+    margin-top: 24px;
+    transition: border-color 0.2s, color 0.2s;
+  }
+
+  .reset-btn:hover { border-color: var(--text-muted); color: var(--text); }
+
+  /* Error */
+  .error-wrap {
+    display: none;
+    background: rgba(255,80,80,0.08);
+    border: 1px solid rgba(255,80,80,0.3);
+    border-radius: var(--radius);
+    padding: 20px;
+    color: #ff8888;
+    font-size: 13px;
+    line-height: 1.6;
+    margin-bottom: 20px;
+  }
+
+  .error-wrap.visible { display: block; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="header-eyebrow">↗ Propensity Intelligence</div>
+    <h1>NZ Property<br><em>Sell Signal</em> Analyst</h1>
+    <p class="header-sub">AI-powered propensity scoring for the New Zealand residential market. Enter any NZ address to receive a data-driven analysis.</p>
+  </div>
+
+  <div class="search-wrap" id="searchWrap">
+    <label class="search-label" for="addressInput">Property Address</label>
+    <div class="search-box">
+      <input
+        type="text"
+        id="addressInput"
+        class="search-input"
+        placeholder="e.g. 12 Remuera Road, Auckland..."
+        autocomplete="off"
+      />
+      <span class="search-icon">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1.5"/>
+          <path d="M10.5 10.5L13 13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+      </span>
+      <div class="dropdown" id="dropdown"></div>
+    </div>
+  </div>
+
+  <button class="analyse-btn" id="analyseBtn" disabled>
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+      <path d="M7 1v2M7 11v2M1 7h2M11 7h2M2.93 2.93l1.41 1.41M9.66 9.66l1.41 1.41M9.66 4.34l1.41-1.41M2.93 11.07l1.41-1.41" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    </svg>
+    Run Analysis
+  </button>
+
+  <div class="loading-wrap" id="loadingWrap">
+    <div class="loading-steps" id="loadingSteps"></div>
+  </div>
+
+  <div class="error-wrap" id="errorWrap"></div>
+
+  <div class="results" id="results"></div>
+
+</div>
+
+<script>
+// NZ Address suggestions — representative sample across key metros
+const NZ_ADDRESSES = [
+  { address: "12 Remuera Road", suburb: "Remuera, Auckland" },
+  { address: "45 Victoria Street West", suburb: "Auckland CBD" },
+  { address: "8 Paritai Drive", suburb: "Orakei, Auckland" },
+  { address: "22 Hobson Street", suburb: "Auckland CBD" },
+  { address: "3 Marine Parade", suburb: "Takapuna, Auckland" },
+  { address: "67 Kohimarama Road", suburb: "Kohimarama, Auckland" },
+  { address: "15 St Heliers Bay Road", suburb: "St Heliers, Auckland" },
+  { address: "100 Ponsonby Road", suburb: "Ponsonby, Auckland" },
+  { address: "34 Mission Bay Road", suburb: "Mission Bay, Auckland" },
+  { address: "7 Arney Road", suburb: "Remuera, Auckland" },
+  { address: "55 Herne Bay Road", suburb: "Herne Bay, Auckland" },
+  { address: "19 Mt Eden Road", suburb: "Mt Eden, Auckland" },
+  { address: "200 The Terrace", suburb: "Wellington CBD" },
+  { address: "88 Oriental Parade", suburb: "Oriental Bay, Wellington" },
+  { address: "14 Kelburn Parade", suburb: "Kelburn, Wellington" },
+  { address: "5 Upland Road", suburb: "Kelburn, Wellington" },
+  { address: "33 Wadestown Road", suburb: "Wadestown, Wellington" },
+  { address: "12 Armagh Street", suburb: "Christchurch CBD" },
+  { address: "45 Fendalton Road", suburb: "Fendalton, Christchurch" },
+  { address: "7 Merivale Lane", suburb: "Merivale, Christchurch" },
+  { address: "23 Cambridge Terrace", suburb: "Christchurch CBD" },
+  { address: "9 Freyberg Place", suburb: "Auckland CBD" },
+  { address: "18 Riddell Road", suburb: "Glendowie, Auckland" },
+  { address: "4 Parnell Road", suburb: "Parnell, Auckland" },
+  { address: "77 Manukau Road", suburb: "Epsom, Auckland" },
+  { address: "31 Great South Road", suburb: "Greenlane, Auckland" },
+  { address: "60 Lambton Quay", suburb: "Wellington CBD" },
+  { address: "102 Marine Parade", suburb: "Napier, Hawke's Bay" },
+  { address: "14 Devonport Road", suburb: "Tauranga CBD" },
+  { address: "5 Durham Street", suburb: "Hamilton CBD" },
+];
+
+const input = document.getElementById('addressInput');
+const dropdown = document.getElementById('dropdown');
+const analyseBtn = document.getElementById('analyseBtn');
+const loadingWrap = document.getElementById('loadingWrap');
+const results = document.getElementById('results');
+const errorWrap = document.getElementById('errorWrap');
+
+let selectedAddress = null;
+let dropdownIndex = -1;
+
+function filterAddresses(query) {
+  if (!query || query.length < 2) return [];
+  const q = query.toLowerCase();
+  return NZ_ADDRESSES.filter(a =>
+    a.address.toLowerCase().includes(q) ||
+    a.suburb.toLowerCase().includes(q)
+  ).slice(0, 8);
+}
+
+function renderDropdown(items) {
+  if (!items.length) {
+    dropdown.innerHTML = `<div class="dropdown-empty">No matching addresses — you can still analyse any address</div>`;
+    dropdown.classList.add('open');
+    return;
+  }
+  dropdown.innerHTML = items.map((item, i) => `
+    <div class="dropdown-item" data-idx="${i}" data-address="${item.address}, ${item.suburb}">
+      <span class="addr-icon">◆</span>
+      <span class="addr-main">${item.address}</span>
+      <span class="addr-suburb">${item.suburb}</span>
+    </div>
+  `).join('');
+  dropdown.classList.add('open');
+
+  dropdown.querySelectorAll('.dropdown-item').forEach(el => {
+    el.addEventListener('mousedown', e => {
+      e.preventDefault();
+      selectAddress(el.dataset.address);
+    });
+  });
+}
+
+function selectAddress(addr) {
+  selectedAddress = addr;
+  input.value = addr;
+  dropdown.classList.remove('open');
+  analyseBtn.disabled = false;
+}
+
+input.addEventListener('input', () => {
+  const val = input.value.trim();
+  selectedAddress = null;
+  analyseBtn.disabled = val.length < 5;
+  if (val.length >= 2) {
+    renderDropdown(filterAddresses(val));
+  } else {
+    dropdown.classList.remove('open');
+  }
+});
+
+input.addEventListener('keydown', e => {
+  const items = dropdown.querySelectorAll('.dropdown-item');
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    dropdownIndex = Math.min(dropdownIndex + 1, items.length - 1);
+    items.forEach((el, i) => el.classList.toggle('active', i === dropdownIndex));
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    dropdownIndex = Math.max(dropdownIndex - 1, 0);
+    items.forEach((el, i) => el.classList.toggle('active', i === dropdownIndex));
+  } else if (e.key === 'Enter') {
+    if (dropdownIndex >= 0 && items[dropdownIndex]) {
+      selectAddress(items[dropdownIndex].dataset.address);
+      dropdownIndex = -1;
+    } else if (input.value.trim().length >= 5) {
+      selectedAddress = input.value.trim();
+      analyseBtn.disabled = false;
+      dropdown.classList.remove('open');
+    }
+  } else if (e.key === 'Escape') {
+    dropdown.classList.remove('open');
+  }
+});
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#searchWrap')) {
+    dropdown.classList.remove('open');
+  }
+});
+
+// Loading steps
+const STEPS = [
+  "Searching homes.co.nz & OneRoof for sales data",
+  "Retrieving CV and council records",
+  "Checking suburb turnover & zoning",
+  "Reviewing macro-economic signals",
+  "Calculating propensity score",
+];
+
+function runLoadingAnimation(callback) {
+  loadingWrap.classList.add('visible');
+  const stepsEl = document.getElementById('loadingSteps');
+  stepsEl.innerHTML = STEPS.map((s, i) => `
+    <div class="loading-step" id="step-${i}">
+      <span class="step-dot"></span>
+      ${s}
+    </div>
+  `).join('');
+
+  let i = 0;
+  function next() {
+    if (i > 0) document.getElementById(`step-${i-1}`)?.classList.replace('active','done');
+    if (i < STEPS.length) {
+      document.getElementById(`step-${i}`)?.classList.add('active');
+      i++;
+      setTimeout(next, 1400 + Math.random() * 600);
+    } else {
+      setTimeout(callback, 400);
+    }
+  }
+  next();
+}
+
+function getScoreColor(score) {
+  if (score <= 3) return '#ff5555';
+  if (score <= 5) return '#ffaa00';
+  if (score <= 7) return '#44aaff';
+  return '#2dff6e';
+}
+
+function getScoreCategory(score) {
+  if (score <= 3) return 'Stagnant';
+  if (score <= 6) return 'Passive';
+  if (score <= 8) return 'Active Lead';
+  return 'Hot Prospect';
+}
+
+function renderResults(address, data) {
+  loadingWrap.classList.remove('visible');
+  const scoreColor = getScoreColor(data.score);
+  const category = getScoreCategory(data.score);
+  const fillPct = (data.score / 10 * 100).toFixed(0);
+
+  results.innerHTML = `
+    <div class="property-header">
+      <div class="property-address">${address}</div>
+      <div class="property-meta">Live data lookup · ${new Date().toLocaleDateString('en-NZ', {day:'numeric',month:'long',year:'numeric'})} · OCR 2.25%</div>
+    </div>
+
+    <div class="score-card" style="--score-color: ${scoreColor}">
+      <div class="score-number">${data.score}</div>
+      <div class="score-right">
+        <div class="score-label">Propensity Score / 10</div>
+        <div class="score-category">${category}</div>
+        <div class="score-justification">${data.justification}</div>
+        <div class="score-bar-wrap">
+          <div class="score-bar">
+            <div class="score-bar-fill" id="scoreBarFill" style="background:${scoreColor}; width:0%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="why-now-card">
+      <div class="why-now-label">▲ The "Why Now" Factor</div>
+      <div class="why-now-text">${data.whyNow}</div>
+    </div>
+
+    ${renderCapitalGains(data.capitalGains)}
+    ${renderSection('A', 'Ownership & Timeline Signals', data.ownershipSignals)}
+    ${renderSection('B', 'Market & Hyper-Local Signals', data.marketSignals)}
+    ${renderSection('C', 'Macro-Economic Context', data.macroSignals)}
+
+    <div class="disclaimer">
+      ⚠ Sale data is sourced live from public NZ property websites (homes.co.nz, OneRoof, realestate.co.nz). Market estimates, suburb signals, and propensity scores are AI-generated and indicative only. This does not constitute financial or real estate advice. Always verify with a licensed NZ real estate agent or valuer.
+    </div>
+
+    <button class="reset-btn" id="resetBtn">← New Analysis</button>
+  `;
+
+  results.classList.add('visible');
+
+  // Animate score bar
+  setTimeout(() => {
+    document.getElementById('scoreBarFill').style.width = fillPct + '%';
+  }, 100);
+
+  // Open first section
+  results.querySelectorAll('.section')[0]?.classList.add('open');
+
+  results.querySelectorAll('.section-header').forEach(h => {
+    h.addEventListener('click', () => {
+      h.closest('.section').classList.toggle('open');
+    });
+  });
+
+  document.getElementById('resetBtn').addEventListener('click', reset);
+}
+
+function renderCapitalGains(cg) {
+  if (!cg) return '';
+  const fmt = n => '$' + Number(n).toLocaleString('en-NZ');
+  const confidence = (cg.confidence || 'medium').toLowerCase().split(' ')[0];
+  const years = 2026 - (cg.lastSaleYear || 2014);
+
+  return `
+    <div class="gains-card">
+      <div class="gains-header">
+        <span class="gains-tag">Capital Gains</span>
+        <span class="gains-title">Estimated Owner Returns</span>
+      </div>
+
+      <div class="gains-arrow">
+        <span class="gains-arrow-price">Purchased ${cg.lastSaleYear} · ${fmt(cg.lastSalePriceNZD)}</span>
+        <span class="gains-arrow-sep">→→→</span>
+        <span class="gains-arrow-price current">Today · ${fmt(cg.currentEstimateNZD)}</span>
+      </div>
+
+      <div class="gains-grid">
+        <div class="gains-stat">
+          <span class="gains-stat-label">Total Gain</span>
+          <span class="gains-stat-value highlight">+${fmt(cg.gainNZD)}</span>
+          <span class="gains-stat-sub">in ${years} years</span>
+        </div>
+        <div class="gains-stat">
+          <span class="gains-stat-label">% Return</span>
+          <span class="gains-stat-value highlight">+${cg.gainPct}%</span>
+          <span class="gains-stat-sub">total appreciation</span>
+        </div>
+        <div class="gains-stat">
+          <span class="gains-stat-label">Annual Return</span>
+          <span class="gains-stat-value">${cg.annualisedReturnPct}%</span>
+          <span class="gains-stat-sub">p.a. (CAGR)</span>
+        </div>
+      </div>
+
+      <div class="gains-note">
+        <span>${cg.cagr_note}</span>
+        <span class="gains-confidence ${confidence}">${confidence} confidence</span>
+      </div>
+    </div>
+  `;
+}
+
+function renderSection(tag, title, signals) {
+  const rows = signals.map(s => `
+    <div class="signal-row">
+      <div class="signal-label">${s.label}</div>
+      <div class="signal-value ${s.sentiment || ''}">${s.value}</div>
+    </div>
+  `).join('');
+  return `
+    <div class="section">
+      <div class="section-header">
+        <span class="section-tag">${tag}</span>
+        <span class="section-title">${title}</span>
+        <span class="section-chevron">▼</span>
+      </div>
+      <div class="section-body">${rows}</div>
+    </div>
+  `;
+}
+
+function reset() {
+  results.classList.remove('visible');
+  results.innerHTML = '';
+  input.value = '';
+  selectedAddress = null;
+  analyseBtn.disabled = true;
+  errorWrap.classList.remove('visible');
+}
+
+// CLAUDE API CALL — uses web_search tool to look up real property data
+async function analyseProperty(address) {
+  const prompt = `You are a NZ Property Propensity Analyst. Your task is to analyse a specific NZ property address and return a JSON report.
+
+IMPORTANT: You MUST use your web_search tool to look up REAL data for this property BEFORE generating the report. Search for:
+1. "${address} NZ property sale history" — to find the actual last sale date and price from homes.co.nz, OneRoof, realestate.co.nz, or similar
+2. "${address} NZ council valuation CV RV" — to find the current Rating Value / CV
+3. "${address.split(',').slice(-1)[0]?.trim() || address} suburb property market 2025 2026" — for suburb market conditions
+
+Use the REAL data you find from web searches in your response. If you find an actual last sale date and price, use those exact figures — do not estimate them. Clearly note in the confidence field whether figures come from real web data or are estimated.
+
+After searching, return ONLY a JSON object (no markdown, no commentary):
+{
+  "score": <integer 1-10>,
+  "justification": "<one sentence explaining the score>",
+  "whyNow": "<2-3 sentence qualitative assessment of why this owner might consider selling now, referencing current NZ market conditions: OCR 2.25%, DTI limits, migration trends>",
+  "capitalGains": {
+    "lastSaleYear": <actual year as integer from web search, e.g. 2024>,
+    "lastSalePriceNZD": <actual last sale price as integer NZD from web search>,
+    "currentEstimateNZD": <current market estimate as integer NZD — from web search or suburb data>,
+    "gainNZD": <currentEstimateNZD minus lastSalePriceNZD>,
+    "gainPct": <percentage gain as integer>,
+    "annualisedReturnPct": <annualised % rounded to 1 decimal — formula: ((current/last)^(1/years)-1)*100>,
+    "cagr_note": "<one sentence contextualising the return vs NZ average>",
+    "confidence": "<'high — actual sale data from [source]' | 'medium — partial data' | 'low — estimated'>"
+  },
+  "ownershipSignals": [
+    {"label": "Last Sale Date", "value": "<actual date if found, e.g. 23 Oct 2024, else estimated>", "sentiment": ""},
+    {"label": "Last Sale Price", "value": "<actual price if found, e.g. $1,472,000, else estimated>", "sentiment": "positive"},
+    {"label": "Tenure Since Purchase", "value": "<months/years since last sale>", "sentiment": "<positive|warning|negative>"},
+    {"label": "CV (Rating Value)", "value": "<actual CV if found, else estimated>", "sentiment": ""},
+    {"label": "CV vs Market Est.", "value": "<% above or below CV>", "sentiment": "<positive|warning|negative>"},
+    {"label": "Equity Position", "value": "<strong|moderate|low — brief reason>", "sentiment": "<positive|warning|negative>"}
+  ],
+  "marketSignals": [
+    {"label": "Suburb Turnover", "value": "<low|moderate|high — brief reason>", "sentiment": "<positive|warning|negative>"},
+    {"label": "Stock Level (weeks)", "value": "<estimated weeks of inventory>", "sentiment": "<positive|warning|negative>"},
+    {"label": "Zoning", "value": "<zone type and developer interest>", "sentiment": "<positive|warning|>"},
+    {"label": "Comparable Sales", "value": "<recent activity summary>", "sentiment": ""},
+    {"label": "Price Trend", "value": "<trending direction with % if estimable>", "sentiment": "<positive|warning|negative>"}
+  ],
+  "macroSignals": [
+    {"label": "OCR Environment", "value": "2.25% — stimulatory, improving affordability", "sentiment": "positive"},
+    {"label": "DTI Constraints", "value": "<how DTI limits affect trade-up for this suburb>", "sentiment": "<positive|warning|negative>"},
+    {"label": "Migration Trend", "value": "<region-specific trend>", "sentiment": "<positive|warning|negative>"},
+    {"label": "Investor Sentiment", "value": "<current investor activity>", "sentiment": "<positive|warning|negative>"},
+    {"label": "Listing Velocity", "value": "<NZ/region new listing trend>", "sentiment": ""}
+  ]
+}
+
+Scoring rubric: 1-3 Stagnant (recently purchased <3yrs, low turnover), 4-6 Passive (5-7yr hold, stable market), 7-8 Active Lead (10+yr hold, high demand), 9-10 Hot Prospect (withdrawn listing, deceased estate, major zoning upside).
+
+Current date: March 2026. OCR: 2.25%. All prices NZD.`;
+
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 3000,
+      tools: [{ type: "web_search_20250305", name: "web_search" }],
+      messages: [{ role: "user", content: prompt }]
+    })
+  });
+
+  if (!response.ok) throw new Error(`API error: ${response.status}`);
+  const data = await response.json();
+
+  // Extract the final text block (after tool use)
+  const textBlocks = data.content.filter(c => c.type === 'text');
+  if (!textBlocks.length) throw new Error('No text response from API');
+  const text = textBlocks.map(c => c.text).join('');
+  const clean = text.replace(/```json|```/g, '').trim();
+
+  // Find JSON object in the response
+  const jsonMatch = clean.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error('Could not parse JSON from response');
+  return JSON.parse(jsonMatch[0]);
+}
+
+analyseBtn.addEventListener('click', async () => {
+  const addr = selectedAddress || input.value.trim();
+  if (!addr || addr.length < 5) return;
+
+  analyseBtn.disabled = true;
+  errorWrap.classList.remove('visible');
+  results.classList.remove('visible');
+  results.innerHTML = '';
+
+  runLoadingAnimation(async () => {
+    try {
+      const data = await analyseProperty(addr);
+      renderResults(addr, data);
+    } catch (err) {
+      loadingWrap.classList.remove('visible');
+      errorWrap.textContent = `Analysis failed: ${err.message}. Please check the address and try again.`;
+      errorWrap.classList.add('visible');
+      analyseBtn.disabled = false;
+    }
+  });
+});
+</script>
+</body>
+</html>
